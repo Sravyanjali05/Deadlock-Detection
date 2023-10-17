@@ -1,0 +1,85 @@
+import java.util.ArrayList;
+import java.util.List;
+
+    class Process {
+        String name;
+        int[] maxResources;
+        int[] allocatedResources;
+
+        public Process(String name, int[] maxResources, int[] allocatedResources) {
+            this.name = name;
+            this.maxResources = maxResources;
+            this.allocatedResources = allocatedResources;
+        }
+    }
+
+    public class DeadlockDetector {
+        private List<Process> processes;
+        private int[] availableResources;
+
+        public DeadlockDetector(List<Process> processes, int[] availableResources) {
+            this.processes = processes;
+            this.availableResources = availableResources;
+        }
+
+        public boolean isSafe() {
+            int n = processes.size();
+            boolean[] finish = new boolean[n];
+            int[] work = availableResources.clone();
+
+            for (int i = 0; i < n; i++) {
+                if (!finish[i] && canAllocate(processes.get(i), work)) {
+                    finish[i] = true;
+                    work = addArrays(work, processes.get(i).allocatedResources);
+                    i = -1; // Start over to recheck all processes
+                }
+            }
+
+            for (boolean f : finish) {
+                if (!f) {
+                    return false; // At least one process couldn't finish
+                }
+            }
+
+            return true; // All processes finished, system is in a safe state
+        }
+
+        private boolean canAllocate(Process process, int[] work) {
+            for (int i = 0; i < work.length; i++) {
+                if (process.maxResources[i] - process.allocatedResources[i] > work[i]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private int[] addArrays(int[] a, int[] b) {
+            int[] result = new int[a.length];
+            for (int i = 0; i < a.length; i++) {
+                result[i] = a[i] + b[i];
+            }
+            return result;
+        }
+
+        public static void main(String[] args) {
+            // Define processes and resources
+            Process p0 = new Process("P0", new int[]{7, 5, 3}, new int[]{0, 1, 0});
+            Process p1 = new Process("P1", new int[]{3, 2, 2}, new int[]{2, 0, 0});
+            Process p2 = new Process("P2", new int[]{9, 0, 2}, new int[]{3, 0, 2});
+            List<Process> processes = new ArrayList<>();
+            processes.add(p0);
+            processes.add(p1);
+            processes.add(p2);
+
+            int[] availableResources = new int[]{3, 3, 2};
+
+            DeadlockDetector detector = new DeadlockDetector(processes, availableResources);
+            if (detector.isSafe()) {
+                System.out.println("No deadlock detected.");
+            } else {
+                System.out.println("Deadlock detected.");
+            }
+        }
+    }
+
+
